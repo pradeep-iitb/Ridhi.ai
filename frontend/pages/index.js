@@ -1,39 +1,102 @@
-import { useState } from 'react'
-
-const requiredKeys = [
-  { name: 'FIREBASE_API_KEY', label: 'Firebase API Key' },
-  { name: 'FIREBASE_AUTH_DOMAIN', label: 'Firebase Auth Domain' },
-  { name: 'FIREBASE_PROJECT_ID', label: 'Firebase Project ID' },
-  { name: 'FIREBASE_STORAGE_BUCKET', label: 'Firebase Storage Bucket' },
-  { name: 'GEMINI_API_KEY', label: 'Gemini API Key' },
-  { name: 'DEEPSEEK_API_KEY', label: 'DeepSeek API Key' },
-  { name: 'BACKEND_URL', label: 'Backend URL (e.g. http://localhost:4000)' }
-]
+import { useEffect, useState } from 'react'
+import { initFirebaseClient } from '../lib/firebaseClient'
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, signOut } from 'firebase/auth'
 
 export default function Home() {
+  const [mode, setMode] = useState('signin') // 'signin' | 'signup'
   const [email, setEmail] = useState('')
-  const [keys, setKeys] = useState(() => {
-    const initial = {}
-    requiredKeys.forEach(k => (initial[k.name] = ''))
-    return initial
-  })
+  const [password, setPassword] = useState('')
   const [status, setStatus] = useState('')
+  const [user, setUser] = useState(null)
+  const [{ auth, googleProvider }, setAuth] = useState({ auth: null, googleProvider: null })
 
-  async function submitKeys(e) {
-    e.preventDefault()
-    setStatus('Saving...')
+  useEffect(() => {
+    const c = initFirebaseClient()
+    setAuth(c)
+    if (c.configured && c.auth) {
+      const unsubscribe = onAuthStateChanged(c.auth, u => {
+        setUser(u)
+      })
+      return () => unsubscribe()
+    } else {
+      setStatus('Firebase not configured. Please create frontend/.env.local with NEXT_PUBLIC_FIREBASE_* values.')
+    }
+  }, [])
+
+  async function handleSignUp(e) {
+    e?.preventDefault()
+    if (!auth) return setStatus('Firebase not configured — cannot create account')
+    setStatus('Creating account...')
     try {
-      const res = await fetch((keys.BACKEND_URL || '/api') + '/save-keys', {
+      await createUserWithEmailAndPassword(auth, email, password)
+      setStatus('Account created — signed in')
+    } catch (err) {
+      setStatus('Error: ' + err.message)
+    }
+  }
+
+  async function handleSignIn(e) {
+    e?.preventDefault()
+    if (!auth) return setStatus('Firebase not configured — cannot sign in')
+    setStatus('Signing in...')
+    try {
+      await signInWithEmailAndPassword(auth, email, password)
+      setStatus('Signed in')
+    } catch (err) {
+      setStatus('Error: ' + err.message)
+    }
+  }
+
+  async function handleGoogle() {
+    if (!auth || !googleProvider) return setStatus('Firebase not configured — cannot use Google sign-in')
+    setStatus('Signing in with Google...')
+    try {
+      await signInWithPopup(auth, googleProvider)
+      setStatus('Signed in with Google')
+    } catch (err) {
+      setStatus('Error: ' + err.message)
+    }
+  }
+
+  async function handleSignOut() {
+    if (!auth) return setStatus('Not signed in')
+    await signOut(auth)
+    setStatus('Signed out')
+  }
+
+  async function sendTokenToServer() {
+    if (!auth || !auth.currentUser) return setStatus('No signed-in user or Firebase not configured')
+    setStatus('Sending token to server...')
+    try {
+      const token = await auth.currentUser.getIdToken()
+      const res = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/verify-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, keys })
+        body: JSON.stringify({ idToken: token })
       })
       const data = await res.json()
-      if (res.ok) setStatus('Saved to session on server (demo).')
-      else setStatus('Error: ' + (data?.error || res.statusText))
+      setStatus('Server response: ' + JSON.stringify(data))
     } catch (err) {
-      setStatus('Network error: ' + err.message)
+      setStatus('Error: ' + err.message)
     }
+  }
+
+  if (user) {
+    return (
+      <div className="page-root">
+        <div className="bg">
+          <div className="glass">
+            <h1 className="title">Ridhi.ai</h1>
+            <p className="subtitle">Welcome, {user.email || user.displayName}</p>
+            <div style={{ marginTop: 12 }}>
+              <button className="btn" onClick={sendTokenToServer}>Send ID token to backend (verify)</button>
+              <button className="btn" style={{ marginLeft: 8, background: 'transparent', border: '1px solid rgba(255,255,255,0.08)' }} onClick={handleSignOut}>Sign out</button>
+            </div>
+            <div className="status">{status}</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -41,25 +104,23 @@ export default function Home() {
       <div className="bg">
         <div className="glass">
           <h1 className="title">Ridhi.ai</h1>
-          <p className="subtitle">Unified AI assistant — demo login</p>
+          <p className="subtitle">Sign in or create an account</p>
 
-          <form onSubmit={submitKeys} className="form">
-            <label className="label">Email (demo user)</label>
+          <form onSubmit={mode === 'signin' ? handleSignIn : handleSignUp} className="form">
+            <label className="label">Email</label>
             <input value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" className="input" />
-
-            <details className="keys">
-              <summary>Enter API keys / URIs (.env values)</summary>
-              {requiredKeys.map(k => (
-                <div key={k.name} className="kv">
-                  <label>{k.label}</label>
-                  <input value={keys[k.name]} onChange={e => setKeys(s => ({ ...s, [k.name]: e.target.value }))} placeholder={k.name} />
-                </div>
-              ))}
-            </details>
+            <label className="label">Password</label>
+            <input value={password} onChange={e => setPassword(e.target.value)} placeholder="password" type="password" className="input" />
 
             <div className="actions">
-              <button className="btn" type="submit">Save keys (demo)</button>
+              <button className="btn" type="submit">{mode === 'signin' ? 'Sign in' : 'Create account'}</button>
+              <button type="button" className="btn" style={{ marginLeft: 8, background: 'linear-gradient(90deg,#06b6d4,#7c3aed)' }} onClick={handleGoogle}>Sign in with Google</button>
             </div>
+
+            <div style={{ marginTop: 8 }}>
+              <button type="button" onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')} className="link">{mode === 'signin' ? 'Create account' : 'Have an account? Sign in'}</button>
+            </div>
+
             <div className="status">{status}</div>
           </form>
         </div>
@@ -74,11 +135,9 @@ export default function Home() {
         .form { display:flex; flex-direction:column; gap:12px }
         .label { font-size:13px; color:#cbd5e1 }
         .input { padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:rgba(255,255,255,0.02); color:#e6eef8 }
-        details { background: rgba(255,255,255,0.01); padding:10px; border-radius:8px }
-        .kv { display:flex; flex-direction:column; gap:6px; margin-top:8px }
-        .kv input { width:100% }
         .actions { margin-top:8px }
         .btn { padding:10px 14px; background:linear-gradient(90deg,#7c3aed,#06b6d4); border:none; color:white; border-radius:8px; cursor:pointer }
+        .link { background:none;border:none;color:#9fb2d6;cursor:pointer }
         .status { margin-top:8px; color:#9fb2d6 }
       `}</style>
     </div>
