@@ -1,0 +1,7 @@
+:root{--bg:#071028}
+html,body,#__next{height:100%}
+body{margin:0;background:var(--bg);font-family:Inter, system-ui, -apple-system}
+/* basic reset */
+*{box-sizing:border-box}
+
+/* small helper styles are inlined in the page for the glass demo */
