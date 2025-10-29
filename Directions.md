@@ -4,6 +4,11 @@ Ridhi.ai — Unified AI Assistant for Students
 💡 CORE IDEA:
 An intelligent AI assistant designed for college and school students that helps manage chats, files, notes, study materials, emails, WhatsApp content, and social reminders — all using voice commands.
 
+Pages-
+Login page with animated bg on left and blur glass div with login schematics with usename and password also with sign in and login with google 
+
+Real chat app with weekwise history message chat and voice chat like chatgpt for logo use the lucid origin cret image in the folder in navbar there will be a toggle switch for history Logo in the middle and log out and upgrade to premium on right . drag and drop feature for uploading along with upload button , therefore it should resemble chatgpt page 
+
 The app will exist as:
 - 🌐 Website (hosted on Vercel)
 - 📱 Android App (via Expo → Play Store)
@@ -29,9 +34,93 @@ The app will exist as:
 - Connects to Firebase and uses environment variables for secrets
 - Uses CORS to allow frontend origin (Vercel or localhost)
 
----
+ENV
+########################################
+# Ridhi.ai Backend environment example
+# Copy to .env and fill with your secrets
+########################################
 
-BACKGROUND -
+# Server
+PORT=4000
+
+# Firebase (if you use Firebase)
+const firebaseConfig = {
+  apiKey: "AIzaSyAZlKw4_-aXIzV3agzbRgpdxYEIEBpFaPA",
+  authDomain: "ridhiaiproject.firebaseapp.com",
+  projectId: "ridhiaiproject",
+  storageBucket: "ridhiaiproject.firebasestorage.app",
+  messagingSenderId: "476510178597",
+  appId: "1:476510178597:web:bded871d1a7adf9d329ecc",
+  measurementId: "G-E43QLV0D42"
+};
+
+# AI APIs
+GEMINI_API_KEY=AIzaSyBeI5lJjxvHpPgU9uOhLyScDVUKc6kjjyI
+DEEPSEEK_API_KEY=sk-adf8e40b351c4dfb8aeb776121d89688
+
+# OAuth / Google
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+Redirected URI = http://localhost:3000/api/auth/callback/google
+Redirected URI = https://ridhi-ai.vercel.app/api/auth/callback/google
+
+
+# Other service endpoints / URIs
+BACKEND_PUBLIC_URL=http://localhost:4000
+FRONTEND_PUBLIC_URL=http://localhost:3000
+
+---
+Background for login page
+npm install three postprocessing
+
+Usage
+import Hyperspeed from './Hyperspeed';
+
+// the component will fill the height/width of its parent container, edit the CSS to change this
+// the options below are the default values
+
+<Hyperspeed
+  effectOptions={{
+    onSpeedUp: () => { },
+    onSlowDown: () => { },
+    distortion: 'turbulentDistortion',
+    length: 400,
+    roadWidth: 10,
+    islandWidth: 2,
+    lanesPerRoad: 4,
+    fov: 90,
+    fovSpeedUp: 150,
+    speedUp: 2,
+    carLightsFade: 0.4,
+    totalSideLightSticks: 20,
+    lightPairsPerRoadWay: 40,
+    shoulderLinesWidthPercentage: 0.05,
+    brokenLinesWidthPercentage: 0.1,
+    brokenLinesLengthPercentage: 0.5,
+    lightStickWidth: [0.12, 0.5],
+    lightStickHeight: [1.3, 1.7],
+    movingAwaySpeed: [60, 80],
+    movingCloserSpeed: [-120, -160],
+    carLightsLength: [400 * 0.03, 400 * 0.2],
+    carLightsRadius: [0.05, 0.14],
+    carWidthPercentage: [0.3, 0.5],
+    carShiftX: [-0.8, 0.8],
+    carFloorSeparation: [0, 5],
+    colors: {
+      roadColor: 0x080808,
+      islandColor: 0x0a0a0a,
+      background: 0x000000,
+      shoulderLines: 0xFFFFFF,
+      brokenLines: 0xFFFFFF,
+      leftCars: [0xD856BF, 0x6750A2, 0xC247AC],
+      rightCars: [0x03B3C3, 0x0E5EA5, 0x324555],
+      sticks: 0x03B3C3,
+    }
+  }}
+/>
+
+BACKGROUND for app - simple and minimilistic
 import React from "react";
 import { Vortex } from "../ui/vortex";
 

@@ -1,17 +1,40 @@
 {
-  "name": "ridhi-frontend",
-  "private": true,
+  "name": "ridhi-ai-frontend",
   "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "dev": "next dev -p 3000",
+    "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@next/swc-win32-x64-msvc": "^16.0.1",
-    "firebase": "9.23.0",
-    "next": "14.2.0",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "next": "14.0.0",
+    "axios": "^1.6.0",
+    "firebase": "^10.7.0",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.294.0",
+    "three": "^0.159.0",
+    "postprocessing": "^6.34.0",
+    "@react-three/fiber": "^8.15.11",
+    "@react-three/drei": "^9.92.7",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "date-fns": "^2.30.0",
+    "clsx": "^2.0.0",
+    "tailwind-merge": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.2",
+    "@types/node": "^20.9.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5",
+    "eslint": "^8.53.0",
+    "eslint-config-next": "14.0.0"
   }
 }

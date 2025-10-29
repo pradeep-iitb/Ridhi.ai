@@ -1,52 +1,56 @@
-const express = require('express')
-const cors = require('cors')
-const admin = require('firebase-admin')
-const app = express()
-const port = process.env.PORT || 4000
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import chatRoutes from './routes/chat.js';
+import filesRoutes from './routes/files.js';
+import gmailRoutes from './routes/gmail.js';
 
-app.use(cors())
-app.use(express.json())
+dotenv.config();
 
-// In-memory store for demo only. Do NOT use in production.
-let sessionKeys = {}
+const app = express();
+const PORT = process.env.PORT || 4000;
 
-// Initialize Firebase Admin if service account JSON provided in env (as JSON string)
-if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-  try {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON)
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) })
-    console.log('Firebase admin initialized')
-  } catch (err) {
-    console.warn('Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON:', err.message)
-  }
-}
+// Middleware
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:3000',
+  'https://ridhi-ai.vercel.app'
+].filter(Boolean);
 
-app.post('/save-keys', (req, res) => {
-  const { email, keys } = req.body || {}
-  if (!keys) return res.status(400).json({ error: 'Missing keys payload' })
-  sessionKeys[email || 'anon'] = keys
-  return res.json({ ok: true })
-})
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 
-app.get('/keys', (req, res) => {
-  const email = req.query.email || 'anon'
-  return res.json({ keys: sessionKeys[email] || null })
-})
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-app.post('/verify-token', async (req, res) => {
-  const { idToken } = req.body || {}
-  if (!idToken) return res.status(400).json({ error: 'Missing idToken' })
-  if (!admin.apps.length) {
-    return res.json({ ok: false, message: 'Firebase admin not configured on server. Set FIREBASE_SERVICE_ACCOUNT_JSON in backend env.' })
-  }
-  try {
-    const decoded = await admin.auth().verifyIdToken(idToken)
-    return res.json({ ok: true, uid: decoded.uid, claims: decoded })
-  } catch (err) {
-    return res.status(401).json({ ok: false, error: err.message })
-  }
-})
+// Routes
+app.use('/api/chat', chatRoutes);
+app.use('/api/files', filesRoutes);
+app.use('/api/gmail', gmailRoutes);
 
-app.get('/', (req, res) => res.json({ ok: true, message: 'Ridhi.ai backend running (demo)' }))
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Ridhi.ai Backend is running' });
+});
 
-app.listen(port, () => console.log(`Ridhi.ai backend listening on http://localhost:${port}`))
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!', message: err.message });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Ridhi.ai Backend running on port ${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
